@@ -55,25 +55,28 @@ const getIssue = async (req, res) => {
 
 const updateIssue = async (req, res) => {
   try {
-    // Safely get the ID whether your route uses :id or :issueId
     const issueId = req.params.issueId || req.params.id;
-    const issue = await Issue.findById(issueId);
+    const issue = await Issue.findOne({ _id: issueId, project: req.project._id });
 
     if (!issue) {
       return res.status(404).json({ message: 'Issue not found' });
     }
 
-    // Role check logic
-    const membership = await Membership.findOne({
-      user: req.user._id,
-      organization: req.params.orgId,
-    });
-
-    const isPrivileged = membership && ['Owner', 'Admin'].includes(membership.role);
+    const isPrivileged = ['Owner', 'Admin'].includes(req.membership.role);
     const isAssigned = issue.assignee && issue.assignee.toString() === req.user._id.toString();
 
     if (!isPrivileged && !isAssigned) {
       return res.status(403).json({ message: 'Not authorized to update this issue' });
+    }
+
+    if (req.body.assignee) {
+      const assigneeMembership = await Membership.findOne({
+        user: req.body.assignee,
+        organization: req.project.organization,
+      });
+      if (!assigneeMembership) {
+        return res.status(400).json({ message: 'Assignee must be a member of the organization' });
+      }
     }
 
     // Apply updates
@@ -85,7 +88,6 @@ const updateIssue = async (req, res) => {
     });
 
     await issue.save();
-
     // Socket.io Real-time Event (Safely grab the project ID directly from the issue)
     const io = req.app.get('io');
     if (io && issue.project) {
