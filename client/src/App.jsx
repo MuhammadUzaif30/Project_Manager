@@ -9,6 +9,8 @@ import OrganizationDetailPage from './pages/OrganizationDetailPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import { SocketProvider } from './context/SocketContext';
 import DashboardPage from './pages/DashboardPage';
+import OrganizationMembersPage from './pages/OrganizationMembersPage';
+import ProjectActivityPage from './pages/ProjectActivityPage';
 
 const queryClient = new QueryClient();
 
@@ -55,7 +57,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
       />
-      
+      <Route
+          path="/organizations/:orgId/projects/:projectId/activity"
+          element={
+            <ProtectedRoute>
+              <ProjectActivityPage />
+            </ProtectedRoute>
+          }
+/>
       <Route
           path="/organizations/:orgId/projects/:projectId/dashboard"
           element={
@@ -64,7 +73,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
+      <Route
+          path="/organizations/:orgId/members"
+          element={
+            <ProtectedRoute>
+              <OrganizationMembersPage />
+            </ProtectedRoute>
+          }
+        />
       <Route
         path="/organizations/:orgId/projects/:projectId"
         element={

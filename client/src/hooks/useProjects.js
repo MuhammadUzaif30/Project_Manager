@@ -1,5 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchProjects, createProject, fetchProject } from '../api/projects';
+import { fetchProjects, createProject, fetchProject, addProjectMember, removeProjectMember } from '../api/projects';
+
+const useProjectMemberMutation = (mutationFn, orgId, projectId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', orgId, projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects', orgId] });
+    },
+  });
+};
 
 export const useProjects = (orgId) => {
   return useQuery({
@@ -26,3 +37,8 @@ export const useProject = (orgId, projectId) => {
     enabled: !!orgId && !!projectId,
   });
 };
+export const useAddProjectMember = (orgId, projectId) =>
+  useProjectMemberMutation((userId) => addProjectMember({ orgId, projectId, userId }), orgId, projectId);
+
+export const useRemoveProjectMember = (orgId, projectId) =>
+  useProjectMemberMutation((userId) => removeProjectMember({ orgId, projectId, userId }), orgId, projectId);

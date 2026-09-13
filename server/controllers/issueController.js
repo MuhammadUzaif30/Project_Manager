@@ -55,31 +55,30 @@ const getIssue = async (req, res) => {
 
 const updateIssue = async (req, res) => {
   try {
-    const issue = await Issue.findOne({ _id: req.params.issueId, project: req.project._id });
+    // Safely get the ID whether your route uses :id or :issueId
+    const issueId = req.params.issueId || req.params.id;
+    const issue = await Issue.findById(issueId);
+
     if (!issue) {
       return res.status(404).json({ message: 'Issue not found' });
     }
 
-    const isPrivileged = req.membership.role === 'Owner' || req.membership.role === 'Admin';
-    const isAssignee = issue.assignee && issue.assignee.toString() === req.user._id.toString();
-
-    if (!isPrivileged && !isAssignee) {
-      return res.status(403).json({ message: 'You can only update issues assigned to you' });
-    }
-
-    if (req.body.assignee) {
-      const assigneeMembership = await Membership.findOne({
-        user: req.body.assignee,
-        organization: req.project.organization,
+    // Role check logic
+    const membership = await Membership.findOne({
+      user: req.user._id,
+      organization: req.params.orgId,
     });
-      if (!assigneeMembership) {
-         return res.status(400).json({ message: 'Assignee must be a member of the organization' });
-      }
+
+    const isPrivileged = membership && ['Owner', 'Admin'].includes(membership.role);
+    const isAssigned = issue.assignee && issue.assignee.toString() === req.user._id.toString();
+
+    if (!isPrivileged && !isAssigned) {
+      return res.status(403).json({ message: 'Not authorized to update this issue' });
     }
 
-    const before = { status: issue.status, priority: issue.priority, assignee: issue.assignee };
-    const fields = ['title', 'description', 'status', 'priority', 'assignee', 'dueDate', 'labels'];
-    fields.forEach((field) => {
+    // Apply updates
+    const updatableFields = ['title', 'description', 'status', 'priority', 'type', 'assignee', 'labels'];
+    updatableFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         issue[field] = req.body[field];
       }
@@ -87,28 +86,18 @@ const updateIssue = async (req, res) => {
 
     await issue.save();
 
-    const logBase = {
-      organization: req.project.organization,
-      project: req.project._id,
-      user: req.user._id,
-      targetType: 'Issue',
-      targetId: issue._id,
-    };
-
-    if (req.body.status !== undefined && req.body.status !== before.status) {
-      await logActivity({ ...logBase, action: 'Issue status changed', metadata: { from: before.status, to: issue.status } });
-    }
-    if (req.body.priority !== undefined && req.body.priority !== before.priority) {
-      await logActivity({ ...logBase, action: 'Issue priority changed', metadata: { from: before.priority, to: issue.priority } });
-    }
-    if (req.body.assignee !== undefined && String(req.body.assignee) !== String(before.assignee)) {
-      await logActivity({ ...logBase, action: 'Issue assigned', metadata: { from: before.assignee, to: issue.assignee } });
-    }
+    // Socket.io Real-time Event (Safely grab the project ID directly from the issue)
     const io = req.app.get('io');
-    io.to(`project:${req.project._id}`).emit('issue:updated', issue);
+    if (io && issue.project) {
+      io.to(`project:${issue.project.toString()}`).emit('issue:updated', issue);
+    }
 
     res.status(200).json({ issue });
   } catch (err) {
+    // Safely catch Mongoose validation errors
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return res.status(400).json({ message: err.message });
+    }
     console.error(err);
     res.status(500).json({ message: 'Something went wrong' });
   }
@@ -185,8 +174,13 @@ const listIssues = async (req, res) => {
       },
     });
   } catch (err) {
-    next(err);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message });
+    }
+    console.error(err);
+    res.status(500).json({ message: 'Something went wrong' });
   }
+
 };
 
 module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues }

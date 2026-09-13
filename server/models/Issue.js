@@ -56,4 +56,6 @@ issueSchema.index({ project: 1, assignee: 1 });
 issueSchema.index({ project: 1, priority: 1 });
 issueSchema.index({ title: 'text', description: 'text' });
 
+// issueSchema.index({ title: 'text', description: 'text' });
+
 module.exports = mongoose.model('Issue', issueSchema);

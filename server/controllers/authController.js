@@ -60,6 +60,9 @@ const login = async (req, res,next) => {
     next(err);
   }
 };
+const logout = async (req, res) => {
+  res.status(200).json({ message: 'Logged out successfully' });
+};
 const getMe = async (req, res) => {
     res.status(200).json({
         user: { id: req.user._id, name: req.user.name, email: req.user.email },
@@ -67,4 +70,4 @@ const getMe = async (req, res) => {
 };
 
 
-module.exports = { register , login , getMe};
+module.exports = { register , login , getMe, logout};
