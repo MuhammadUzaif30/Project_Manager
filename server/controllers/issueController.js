@@ -35,6 +35,7 @@ const createIssue = async (req, res) => {
   }
 };
 const getIssue = async (req, res) => {
+const getIssue = async (req, res) => {
   try {
     const issue = await Issue.findOne({ _id: req.params.issueId, project: req.project._id })
       .populate('assignee', 'name email')
@@ -44,7 +45,7 @@ const getIssue = async (req, res) => {
       return res.status(404).json({ message: 'Issue not found' });
     }
 
-    res.status(200).json({ issue });
+    res.status(200).json({ issue, myRole: req.membership.role });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Something went wrong' });
@@ -178,5 +179,5 @@ const listIssues = async (req, res) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
-
-module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues };
+}
+module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues }

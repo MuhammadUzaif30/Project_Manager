@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors'); // <-- 1. ADD THIS IMPORT
 require('dotenv').config();
 
 // Imports
@@ -14,6 +15,13 @@ const Membership = require('./models/Membership');
 const Project = require('./models/Project');
 
 const app = express();
+
+// <-- 2. ADD THIS EXPRESS CORS MIDDLEWARE
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true                
+}));
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -22,6 +30,10 @@ const io = new Server(server, {
   },
 });
 
+app.set('io', io);
+
+// --- SECURE SOCKET LOGIC ---
+// ... [The rest of your file remains exactly the same]
 app.set('io', io);
 
 // --- SECURE SOCKET LOGIC ---
