@@ -1,4 +1,5 @@
 const Issue = require('../models/Issue');
+const Membership = require('../models/Membership');
 const logActivity = require('../utils/logActivity');
 const createIssue = async (req, res) => {
   try {
@@ -34,7 +35,7 @@ const createIssue = async (req, res) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
-const getIssue = async (req, res) => {
+
 const getIssue = async (req, res) => {
   try {
     const issue = await Issue.findOne({ _id: req.params.issueId, project: req.project._id })
@@ -66,8 +67,17 @@ const updateIssue = async (req, res) => {
       return res.status(403).json({ message: 'You can only update issues assigned to you' });
     }
 
-    const before = { status: issue.status, priority: issue.priority, assignee: issue.assignee };
+    if (req.body.assignee) {
+      const assigneeMembership = await Membership.findOne({
+        user: req.body.assignee,
+        organization: req.project.organization,
+    });
+      if (!assigneeMembership) {
+         return res.status(400).json({ message: 'Assignee must be a member of the organization' });
+      }
+    }
 
+    const before = { status: issue.status, priority: issue.priority, assignee: issue.assignee };
     const fields = ['title', 'description', 'status', 'priority', 'assignee', 'dueDate', 'labels'];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -179,5 +189,5 @@ const listIssues = async (req, res) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
-}
+
 module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues }

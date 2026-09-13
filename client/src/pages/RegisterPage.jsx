@@ -21,7 +21,7 @@ const RegisterPage = () => {
     try {
       const res = await axiosClient.post('/auth/register', { name, email, password });
       login(res.data.token, res.data.user);
-      navigate('/');
+      navigate('/organization');
     } catch (err) {
       const validationErrors = err.response?.data?.errors;
       if (validationErrors?.length) {

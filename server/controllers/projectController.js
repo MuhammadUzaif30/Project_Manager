@@ -1,5 +1,5 @@
 const Project = require('../models/Project');
-
+const Membership = require('../models/Membership');
 const createProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
@@ -77,6 +77,14 @@ const addProjectMember = async (req, res) => {
   try {
     const { userId } = req.body;
 
+    const membership = await Membership.findOne({
+      user: userId,
+      organization: req.project.organization,
+    });
+    if (!membership) {
+      return res.status(400).json({ message: 'User must be a member of the organization before being added to a project' });
+    }
+
     if (req.project.members.some((id) => id.toString() === userId)) {
       return res.status(409).json({ message: 'User is already a project member' });
     }
@@ -89,7 +97,6 @@ const addProjectMember = async (req, res) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
-
 const removeProjectMember = async (req, res) => {
   try {
     const { userId } = req.params;

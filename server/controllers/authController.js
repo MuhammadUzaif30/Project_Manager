@@ -62,8 +62,10 @@ const login = async (req, res) => {
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
-const getMe = async(req,res) => {
-    res.status(200).json({ user : req.user});
+const getMe = async (req, res) => {
+    res.status(200).json({
+        user: { id: req.user._id, name: req.user.name, email: req.user.email },
+    });
 };
 
 

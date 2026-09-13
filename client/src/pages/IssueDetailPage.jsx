@@ -1,45 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useIssue, useUpdateIssue } from '../hooks/useIssues';
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment } from '../hooks/useComments';
 import { useProjectActivity } from '../hooks/useActivity';
 import CommentItem from '../components/CommentItem';
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../context/SocketContext';
-
-const { socket } = useSocket();
-const queryClient = useQueryClient();
-
-useEffect(() => {
-  if (!socket) return;
-
-  socket.emit('joinProject', projectId);
-
-  const handleIssueUpdate = (updatedIssue) => {
-    if (updatedIssue._id === issueId) {
-      queryClient.invalidateQueries({ queryKey: ['issue', orgId, projectId, issueId] });
-    }
-  };
-
-  const handleCommentCreated = (comment) => {
-    if (comment.issue === issueId) {
-      queryClient.invalidateQueries({ queryKey: ['comments', orgId, projectId, issueId] });
-    }
-  };
-
-  socket.on('issue:updated', handleIssueUpdate);
-  socket.on('comment:created', handleCommentCreated);
-
-  return () => {
-    socket.off('issue:updated', handleIssueUpdate);
-    socket.off('comment:created', handleCommentCreated);
-  };
-}, [socket, projectId, orgId, issueId, queryClient]);
 
 const IssueDetailPage = () => {
   const { orgId, projectId, issueId } = useParams();
   const [newComment, setNewComment] = useState('');
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit('joinProject', projectId);
+
+    const handleIssueUpdate = (updatedIssue) => {
+      if (updatedIssue._id === issueId) {
+        queryClient.invalidateQueries({ queryKey: ['issue', orgId, projectId, issueId] });
+      }
+    };
+
+    const handleCommentCreated = (comment) => {
+      if (comment.issue === issueId) {
+        queryClient.invalidateQueries({ queryKey: ['comments', orgId, projectId, issueId] });
+      }
+    };
+
+    socket.on('issue:updated', handleIssueUpdate);
+    socket.on('comment:created', handleCommentCreated);
+
+    return () => {
+      socket.off('issue:updated', handleIssueUpdate);
+      socket.off('comment:created', handleCommentCreated);
+    };
+  }, [socket, projectId, orgId, issueId, queryClient]);
 
   const { data: issue, isLoading: issueLoading, isError: issueError } = useIssue(orgId, projectId, issueId);
   const { data: comments, isLoading: commentsLoading } = useComments(orgId, projectId, issueId);

@@ -1,41 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useIssues, useCreateIssue } from '../hooks/useIssues';
 import IssueCard from '../components/IssueCard';
 import IssueFilterBar from '../components/IssueFilterBar';
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../context/SocketContext';
-
-const { socket } = useSocket();
-const queryClient = useQueryClient();
-
-useEffect(() => {
-  if (!socket) return;
-
-  socket.emit('joinProject', projectId);
-
-  const handleIssueEvent = () => {
-    queryClient.invalidateQueries({ queryKey: ['issues', orgId, projectId] });
-  };
-
-  socket.on('issue:created', handleIssueEvent);
-  socket.on('issue:updated', handleIssueEvent);
-  socket.on('issue:deleted', handleIssueEvent);
-
-  return () => {
-    socket.emit('leaveProject', projectId);
-    socket.off('issue:created', handleIssueEvent);
-    socket.off('issue:updated', handleIssueEvent);
-    socket.off('issue:deleted', handleIssueEvent);
-  };
-}, [socket, projectId, orgId, queryClient]);
 
 const ProjectDetailPage = () => {
   const { orgId, projectId } = useParams();
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
   const [newIssueTitle, setNewIssueTitle] = useState('');
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
 
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit('joinProject', projectId);
+
+    const handleIssueEvent = () => {
+      queryClient.invalidateQueries({ queryKey: ['issues', orgId, projectId] });
+    };
+
+    socket.on('issue:created', handleIssueEvent);
+    socket.on('issue:updated', handleIssueEvent);
+    socket.on('issue:deleted', handleIssueEvent);
+
+    return () => {
+      socket.emit('leaveProject', projectId);
+      socket.off('issue:created', handleIssueEvent);
+      socket.off('issue:updated', handleIssueEvent);
+      socket.off('issue:deleted', handleIssueEvent);
+    };
+  }, [socket, projectId, orgId, queryClient]);
   const { data, isLoading, isError } = useIssues(orgId, projectId, filters);
   const createIssueMutation = useCreateIssue(orgId, projectId);
 

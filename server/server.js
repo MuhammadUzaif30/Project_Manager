@@ -85,19 +85,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/organizations', organizationRoutes);
 
-app.delete('/api/reset', async (req, res) => {
-    try {
-        const mongoose = require('mongoose');
-        const collections = Object.keys(mongoose.connection.collections);
-        for (const collectionName of collections) {
-            await mongoose.connection.collections[collectionName].deleteMany({});
-        }
-        res.status(200).json({ message: "Database completely wiped!" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to reset database", error: err.message });
-    }
-});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
