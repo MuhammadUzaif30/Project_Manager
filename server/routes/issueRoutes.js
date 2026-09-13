@@ -6,8 +6,9 @@ const requireOrgRole = require('../middleware/requireOrgRole');
 const loadProject = require('../middleware/loadProject');
 const requireProjectMember = require('../middleware/requireProjectMember');
 const validate = require('../middleware/validate');
-const { createIssueValidation } = require('../validators/issueValidators');
+const { createIssueValidation , updateIssueValidation } = require('../validators/issueValidators');
 const commentRoutes = require('./commentRoutes');
+
 
 router.use(authenticate);
 router.use(requireOrgRole('Member'));
@@ -19,7 +20,7 @@ router.get('/', listIssues);
 router.get('/:issueId', getIssue);
 router.patch('/:issueId', updateIssue);
 router.delete('/:issueId', deleteIssue);
-
+router.patch('/:issueId', updateIssueValidation, validate, updateIssue);
 router.use('/:issueId/comments', commentRoutes);
 
 module.exports = router;

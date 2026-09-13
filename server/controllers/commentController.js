@@ -18,8 +18,7 @@ const createComment = async (req, res) => {
     });
 
     await comment.populate('author', 'name email');
-
-    await logActivity({
+        await logActivity({
         organization: req.project.organization,
         project: req.project._id,
         user: req.user._id,
@@ -29,7 +28,22 @@ const createComment = async (req, res) => {
         metadata: { issue: issue._id },
 });
 
+       await logActivity({
+        organization: req.project.organization,
+        project: req.project._id,
+        user: req.user._id,
+        action: 'Comment added',
+        targetType: 'Comment',
+        targetId: comment._id,
+        metadata: { issue: issue._id },
+});
+
+    const io = req.app.get('io');
+    io.to(`project:${req.project._id}`).emit('comment:created', comment);
+
     res.status(201).json({ comment });
+    res.status(201).json({ comment });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Something went wrong' });
@@ -93,8 +107,7 @@ const deleteComment = async (req, res) => {
     await comment.deleteOne();
     res.status(200).json({ message: 'Comment deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 

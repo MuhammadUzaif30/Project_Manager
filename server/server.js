@@ -9,6 +9,8 @@ require('dotenv').config();
 const socketAuth = require('./socket/socketAuth');
 const authRoutes = require('./routes/authRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
+const mongoSanitize = require('express-mongo-sanitize');
+const errorHandler = require('./middleware/errorHandler');
 
 // NEW: Import the models needed for socket authorization
 const Membership = require('./models/Membership');
@@ -21,6 +23,12 @@ app.use(cors({
   origin: 'http://localhost:5173', 
   credentials: true                
 }));
+app.use((req, res, next) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  // We skip req.query to prevent the Express 5 crash
+  next();
+});
 
 const server = http.createServer(app);
 
@@ -85,6 +93,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/organizations', organizationRoutes);
 
+app.use(errorHandler);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))

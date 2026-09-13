@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const issueRoutes = require('./issueRoutes');
+const { createProjectValidation, updateProjectValidation } = require('../validators/projectValidators');
 const { getProjectActivity } = require('../controllers/activityController');
 const { getProjectDashboard } = require('../controllers/dashboardController');
 const {
@@ -17,7 +18,6 @@ const requireOrgRole = require('../middleware/requireOrgRole');
 const loadProject = require('../middleware/loadProject');
 const requireProjectMember = require('../middleware/requireProjectMember');
 const validate = require('../middleware/validate');
-const { createProjectValidation } = require('../validators/projectValidators');
 
 router.use(authenticate);
 router.use(requireOrgRole('Member'));
@@ -26,7 +26,7 @@ router.post('/', requireOrgRole('Admin'), createProjectValidation, validate, cre
 router.get('/', listProjects);
 
 router.get('/:projectId', loadProject, requireProjectMember, getProjectDetails);
-router.patch('/:projectId', requireOrgRole('Admin'), loadProject, updateProject);
+router.patch('/:projectId', requireOrgRole('Admin'), loadProject, updateProjectValidation, validate, updateProject);
 router.delete('/:projectId', requireOrgRole('Admin'), loadProject, deleteProject);
 router.post('/:projectId/members', requireOrgRole('Admin'), loadProject, addProjectMember);
 router.delete('/:projectId/members/:userId', requireOrgRole('Admin'), loadProject, removeProjectMember);

@@ -105,8 +105,7 @@ const removeProjectMember = async (req, res) => {
     await req.project.save();
     res.status(200).json({ project: req.project });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 

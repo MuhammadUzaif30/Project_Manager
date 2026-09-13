@@ -185,8 +185,7 @@ const listIssues = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 

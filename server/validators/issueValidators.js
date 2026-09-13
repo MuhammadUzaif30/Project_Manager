@@ -9,5 +9,14 @@ const createIssueValidation = [
   body('dueDate').optional({ nullable: true }).isISO8601().withMessage('Invalid due date'),
   body('labels').optional().isArray().withMessage('Labels must be an array'),
 ];
+const updateIssueValidation = [
+  body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
+  body('description').optional().trim(),
+  body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']).withMessage('Invalid status'),
+  body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).withMessage('Invalid priority'),
+  body('assignee').optional({ nullable: true }).isMongoId().withMessage('Invalid assignee ID'),
+  body('dueDate').optional({ nullable: true }).isISO8601().withMessage('Invalid due date'),
+  body('labels').optional().isArray().withMessage('Labels must be an array'),
+];
 
-module.exports = { createIssueValidation };
+module.exports = { createIssueValidation, updateIssueValidation };

@@ -13,8 +13,7 @@ const loadProject = async (req, res, next) => {
     req.project = project;
     next();
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 

@@ -28,13 +28,12 @@ const register = async (req, res) => {
             token,
             user: { id: user._id, name: user.name, email: user.email },
         });
-        
     } catch (err) {
         console.log(err); 
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
-const login = async (req, res) => {
+const login = async (req, res,next) => {
     try {
         const { email, password } = req.body;
 
@@ -58,9 +57,8 @@ const login = async (req, res) => {
             user: { id: user._id, name: user.name, email: user.email },
         });
     } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Something went wrong' });
-    }
+    next(err);
+  }
 };
 const getMe = async (req, res) => {
     res.status(200).json({

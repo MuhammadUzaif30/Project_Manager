@@ -6,10 +6,13 @@ import { useProjectActivity } from '../hooks/useActivity';
 import CommentItem from '../components/CommentItem';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../context/SocketContext';
+import { useProject } from '../hooks/useProjects';
+import IssueForm from '../components/IssueForm';
 
 const IssueDetailPage = () => {
   const { orgId, projectId, issueId } = useParams();
   const [newComment, setNewComment] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const { socket } = useSocket();
   const queryClient = useQueryClient();
 
@@ -42,6 +45,7 @@ const IssueDetailPage = () => {
   const { data: issue, isLoading: issueLoading, isError: issueError } = useIssue(orgId, projectId, issueId);
   const { data: comments, isLoading: commentsLoading } = useComments(orgId, projectId, issueId);
   const { data: allActivity } = useProjectActivity(orgId, projectId);
+  const { data: project } = useProject(orgId, projectId);
 
   const updateIssueMutation = useUpdateIssue(orgId, projectId);
   const createCommentMutation = useCreateComment(orgId, projectId, issueId);
@@ -53,14 +57,6 @@ const IssueDetailPage = () => {
 
   const issueActivity = (allActivity || []).filter((a) => a.targetId === issueId);
 
-  const handleStatusChange = (e) => {
-    updateIssueMutation.mutate({ issueId, updates: { status: e.target.value } });
-  };
-
-  const handlePriorityChange = (e) => {
-    updateIssueMutation.mutate({ issueId, updates: { priority: e.target.value } });
-  };
-
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -70,34 +66,48 @@ const IssueDetailPage = () => {
   return (
     <div style={{ maxWidth: 700, margin: '40px auto' }}>
       <Link to={`/organizations/${orgId}/projects/${projectId}`}>← Back to issues</Link>
-      <h1>{issue.title}</h1>
-      <p>{issue.description || <em>No description</em>}</p>
-
-      <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-        <label>
-          Status:{' '}
-          <select value={issue.status} onChange={handleStatusChange}>
-            <option value="TODO">TODO</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="REVIEW">Review</option>
-            <option value="DONE">Done</option>
-          </select>
-        </label>
-
-        <label>
-          Priority:{' '}
-          <select value={issue.priority} onChange={handlePriorityChange}>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="CRITICAL">Critical</option>
-          </select>
-        </label>
-      </div>
-
-      <p style={{ fontSize: 14, color: '#666' }}>
-        Reporter: {issue.reporter.name} · Assignee: {issue.assignee?.name || 'Unassigned'}
-      </p>
+      
+      {isEditing ? (
+        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 16, marginBottom: 16, marginTop: 16 }}>
+          <IssueForm
+            issue={issue}
+            members={project?.members}
+            isSubmitting={updateIssueMutation.isPending}
+            onCancel={() => setIsEditing(false)}
+            onSubmit={(payload) => {
+              updateIssueMutation.mutate(
+                { issueId, updates: payload },
+                { onSuccess: () => setIsEditing(false) }
+              );
+            }}
+          />
+        </div>
+      ) : (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1>{issue.title}</h1>
+            <button onClick={() => setIsEditing(true)}>Edit</button>
+          </div>
+          <p>{issue.description || <em>No description</em>}</p>
+          <p style={{ fontSize: 14, color: '#666' }}>
+            Status: {issue.status} · Priority: {issue.priority} · Reporter: {issue.reporter.name} · Assignee:{' '}
+            {issue.assignee?.name || 'Unassigned'}
+            {issue.dueDate && ` · Due ${new Date(issue.dueDate).toLocaleDateString()}`}
+          </p>
+          {issue.labels?.length > 0 && (
+            <p>
+              {issue.labels.map((label) => (
+                <span
+                  key={label}
+                  style={{ fontSize: 12, background: '#eee', padding: '2px 6px', borderRadius: 4, marginRight: 4 }}
+                >
+                  {label}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+      )}
 
       {updateIssueMutation.isError && (
         <p style={{ color: 'red' }}>

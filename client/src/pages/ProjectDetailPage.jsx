@@ -5,11 +5,13 @@ import IssueCard from '../components/IssueCard';
 import IssueFilterBar from '../components/IssueFilterBar';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../context/SocketContext';
+import { useProject } from '../hooks/useProjects';
+import IssueForm from '../components/IssueForm';
 
 const ProjectDetailPage = () => {
   const { orgId, projectId } = useParams();
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
-  const [newIssueTitle, setNewIssueTitle] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const { socket } = useSocket();
   const queryClient = useQueryClient();
 
@@ -33,14 +35,14 @@ const ProjectDetailPage = () => {
       socket.off('issue:deleted', handleIssueEvent);
     };
   }, [socket, projectId, orgId, queryClient]);
+
   const { data, isLoading, isError } = useIssues(orgId, projectId, filters);
   const createIssueMutation = useCreateIssue(orgId, projectId);
+  const { data: project } = useProject(orgId, projectId);
 
-  const handleCreateIssue = async (e) => {
-    e.preventDefault();
-    if (!newIssueTitle.trim()) return;
-    await createIssueMutation.mutateAsync({ title: newIssueTitle });
-    setNewIssueTitle('');
+  const handleCreateIssue = async (payload) => {
+    await createIssueMutation.mutateAsync(payload);
+    setShowCreateForm(false);
   };
 
   if (isLoading) return <div>Loading issues...</div>;
@@ -55,17 +57,21 @@ const ProjectDetailPage = () => {
         <Link to={`/organizations/${orgId}`}>← Back to projects</Link>
         {' · '}
         <Link to={`/organizations/${orgId}/projects/${projectId}/dashboard`}>Dashboard</Link>
-      <form onSubmit={handleCreateIssue} style={{ marginBottom: 16 }}>
-        <input
-          type="text"
-          placeholder="New issue title"
-          value={newIssueTitle}
-          onChange={(e) => setNewIssueTitle(e.target.value)}
-        />
-        <button type="submit" disabled={createIssueMutation.isPending}>
-          {createIssueMutation.isPending ? 'Creating...' : 'Create Issue'}
+      
+      {showCreateForm ? (
+        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 16, marginBottom: 16 }}>
+          <IssueForm
+            members={project?.members}
+            onSubmit={handleCreateIssue}
+            onCancel={() => setShowCreateForm(false)}
+            isSubmitting={createIssueMutation.isPending}
+          />
+        </div>
+      ) : (
+        <button onClick={() => setShowCreateForm(true)} style={{ marginBottom: 16 }}>
+          + New Issue
         </button>
-      </form>
+      )}
 
       <IssueFilterBar filters={filters} onChange={setFilters} />
 

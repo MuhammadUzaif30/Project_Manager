@@ -9,3 +9,7 @@ export const createProject = async ({ orgId, name, description }) => {
   const res = await axiosClient.post(`/organizations/${orgId}/projects`, { name, description });
   return res.data.project;
 };
+export const fetchProject = async ({ orgId, projectId }) => {
+  const res = await axiosClient.get(`/organizations/${orgId}/projects/${projectId}`);
+  return res.data.project;
+};

@@ -23,9 +23,8 @@ const requireOrgRole = (minimumRole) => {
       req.membership = membership;
       next();
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Something went wrong' });
-    }
+    next(err);
+  }
   };
 };
 
