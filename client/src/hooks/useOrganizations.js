@@ -18,13 +18,13 @@ export const useCreateOrganization = () => {
     },
   });
 };
-export const useMembers = (orgId) => {
-  return useQuery({
-    queryKey: ['members', orgId],
-    queryFn: () => fetchMembers(orgId),
-    enabled: !!orgId,
-  });
-};
+// export const useMembers = (orgId) => {
+//   return useQuery({
+//     queryKey: ['members', orgId],
+//     queryFn: () => fetchMembers(orgId),
+//     enabled: !!orgId,
+//   });
+// };
 
 const useMemberMutation = (mutationFn, orgId) => {
   const queryClient = useQueryClient();
