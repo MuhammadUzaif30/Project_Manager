@@ -19,7 +19,6 @@ A simplified, Jira-style team issue tracker built as a full-stack MERN technical
 13. [Socket.IO Implementation](#socketio-implementation)
 14. [Database Design](#database-design)
 15. [Important Technical Decisions](#important-technical-decisions)
-16. [Known Limitations](#known-limitations)
 
 ## Project Overview
 
@@ -271,11 +270,3 @@ User ──< Membership >── Organization
 - **Centralized error handling.** A single Express error-handling middleware (`middleware/errorHandler.js`) formats Mongoose `ValidationError`, `CastError`, and duplicate-key (`11000`) errors into consistent, appropriately-coded JSON responses (400/409 rather than a generic 500), acting as a safety net behind per-field validators.
 - **Rate limiting on authentication endpoints.** `POST /auth/login` and `POST /auth/register` are limited to 10 requests per 15 minutes per IP, to slow down brute-force credential attempts without meaningfully affecting legitimate use.
 - **Dashboard statistics use `countDocuments`/aggregation queries**, never full-collection fetches, so that computing simple counts doesn't require transferring the entire issue dataset to the frontend — this remains performant regardless of how many issues a project accumulates.
-
-## Known Limitations
-
-- **The issue label filter dropdown reflects only labels present on the currently loaded page of issues**, not every distinct label across the whole project. A complete solution would add a dedicated backend endpoint using MongoDB's `distinct()` operator; this was deprioritized given time constraints.
-- **`IssueDetailPage` does not explicitly leave its Socket.IO project room when navigating back to that same project's issue list** (only when the project page itself unmounts). This is a deliberate simplification for the app's specific navigation flow rather than a general solution.
-- **The `express-validator` error response shape (`{ errors: [...] }`) differs from the rest of the API's error shape (`{ message: "..." }`).** Both are handled correctly on the frontend, but unifying this into one consistent error shape across the whole API would be a worthwhile follow-up.
-- **Labels are stored as a plain array of strings** on each issue rather than as a separate, project-scoped collection of reusable label documents — simpler to implement, at the cost of no centralized label management (renaming a label means editing every issue that uses it).
-- **No email-based invitation flow** for adding non-registered users to an organization (see "Organization invitations require an existing account" above).
