@@ -22,15 +22,15 @@ A simplified, Jira-style team issue tracker built as a full-stack MERN technical
 
 ## Project Overview
 
-This application is a simplified Jira: users belong to **organizations**, organizations contain **projects**, projects contain **issues**, and issues support **comments**. Access is controlled by a per-organization role (Owner / Admin / Member) and, separately, by per-project membership. Changes to issues and comments propagate live to other connected users via Socket.IO, and an activity log records important actions across each organization and project. A dashboard surfaces aggregated, backend-computed statistics per project.
+This application is a Issue manager: users belong to **organizations**, organizations contain **projects**, projects contain **issues**, and issues support **comments**. Access is controlled by a per-organization role (Owner / Admin / Member) and, separately, by per-project membership. Changes to issues and comments propagate live to other connected users via Socket.IO, and an activity log records important actions across each organization and project (both a per-issue view and a full per-project activity feed are available). A dashboard surfaces aggregated, backend-computed statistics per project.
 
-Visual polish was intentionally deprioritized in favor of correctness, authorization, backend architecture, database design, API quality, and real-time functionality, per the assessment's stated priority order.
+Visual polish was intentionally deprioritized during the core build in favor of correctness, authorization, backend architecture, database design, API quality, and real-time functionality, per the assessment's stated priority order. A full styling pass (Tailwind CSS) was completed afterward for presentation purposes.
 
 ## Technology Stack
 
 **Backend:** Node.js, Express.js, MongoDB, Mongoose, Socket.IO, JWT (jsonwebtoken), bcryptjs, express-validator, express-rate-limit, express-mongo-sanitize, cors
 
-**Frontend:** React (Vite), React Router, TanStack Query (React Query), Axios, Socket.IO Client
+**Frontend:** React (Vite), React Router, TanStack Query (React Query), Axios, Socket.IO Client, Tailwind CSS
 
 **Testing:** Jest, Supertest, mongodb-memory-server
 
@@ -39,6 +39,7 @@ Visual polish was intentionally deprioritized in favor of correctness, authoriza
 - **TanStack Query** over Redux Toolkit/Zustand for client state: nearly all state in this app is server data (issues, projects, comments) rather than pure client UI state, and TanStack Query handles caching, refetching, loading/error states, and cache invalidation for that specific problem out of the box, without the boilerplate a general-purpose store would add.
 - **bcryptjs** over native `bcrypt`: identical API and security properties, but pure JavaScript, avoiding native-module compilation issues on some machines.
 - **mongodb-memory-server** for tests: gives every test run a real, disposable MongoDB instance, so tests exercise actual Mongoose queries and validation rather than mocks, without ever touching a real database.
+- **Tailwind CSS**: utility classes applied directly in JSX kept styling consistent across every page (shared color/spacing scale) without maintaining separate stylesheet files per component.
 
 ## Architecture Overview
 
@@ -77,9 +78,9 @@ The frontend mirrors the same separation-of-concerns principle:
 client/src/
   api/          — raw axios calls per resource, one file per resource
   hooks/        — TanStack Query wrappers (useQuery/useMutation) per resource
-  components/   — small, reusable presentational pieces
+  components/   — small, reusable presentational pieces (incl. Badges, IssueCard, IssueForm)
   pages/        — route-level components that compose hooks + components
-  context/       — app-wide state: AuthContext, SocketContext
+  context/      — app-wide state: AuthContext, SocketContext
 ```
 
 ## Installation
@@ -124,6 +125,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 `.env` is git-ignored and must never be committed. `.env.example` intentionally is committed, with placeholder values only.
 
+**MongoDB Atlas Network Access:** this project's development database has Network Access set to allow connections from any IP (`0.0.0.0/0`), since development happens from a machine with a non-static IP. This is standard practice for local development — actual data access still requires the correct database username and password from `MONGO_URI`, so this does not itself expose any data. In a production deployment, this should instead be restricted to the deploying server's known, fixed IP address.
+
 ## Backend Setup
 
 ```
@@ -157,7 +160,7 @@ No manual schema or migration step is required. Mongoose creates collections and
 If using MongoDB Atlas, make sure to:
 
 1. Create a database user (Database Access) with a password.
-2. Whitelist your IP address, or allow access from anywhere for local development (Network Access → `0.0.0.0/0`).
+2. Whitelist your IP address under Network Access, or allow access from anywhere (`0.0.0.0/0`) for local development.
 
 ## Running Tests
 
@@ -182,20 +185,21 @@ All endpoints are prefixed with `/api`. Representative routes (all further neste
 |---|---|---|
 | POST | `/auth/register` | Register a new user |
 | POST | `/auth/login` | Log in, receive a JWT |
+| POST | `/auth/logout` | Log out (see note below) |
 | GET | `/auth/me` | Get the current authenticated user |
 | GET, POST | `/organizations` | List / create organizations |
 | GET, POST | `/organizations/:orgId/members` | List / add organization members |
 | PATCH | `/organizations/:orgId/members/:userId/role` | Change a member's role |
 | DELETE | `/organizations/:orgId/members/:userId` | Remove a member |
+| GET | `/organizations/:orgId/activity` | Organization-level activity feed |
 | GET, POST | `/organizations/:orgId/projects` | List / create projects |
 | GET, PATCH, DELETE | `/organizations/:orgId/projects/:projectId` | View / update / delete a project |
-| POST, DELETE | `/organizations/:orgId/projects/:projectId/members[/:userId]` | Add / remove project members |
+| POST, DELETE | `/.../projects/:projectId/members[/:userId]` | Add / remove project members |
 | GET, POST | `/.../projects/:projectId/issues` | List (with filters/sort/pagination) / create issues |
 | GET, PATCH, DELETE | `/.../issues/:issueId` | View / update / delete an issue |
 | GET, POST, PATCH, DELETE | `/.../issues/:issueId/comments[/:commentId]` | Comment CRUD |
 | GET | `/.../projects/:projectId/dashboard` | Aggregated project statistics |
-| GET | `/.../projects/:projectId/activity` | Project-level activity feed |
-| GET | `/organizations/:orgId/activity` | Organization-level activity feed |
+| GET | `/.../projects/:projectId/activity` | Project-level activity feed (up to 50 most recent entries) |
 
 **Issue list query parameters:** `?status=&priority=&assignee=&label=&search=&sortBy=&order=&page=&limit=`
 
@@ -209,6 +213,7 @@ Authentication is stateless, JWT-based:
 2. The client stores this token in `localStorage` and attaches it automatically to every request via an axios request interceptor (`Authorization: Bearer <token>`), so individual API calls never need to manage this manually.
 3. The `authenticate` middleware verifies the token's signature on every protected request and re-fetches the user from the database (rather than trusting the token payload alone), so a deleted user's token stops working immediately instead of remaining valid until natural expiry.
 4. An axios response interceptor watches for any `401` response globally, clears the stale token, and redirects to `/login` — centralizing session-expiry handling instead of scattering it across every page.
+5. `POST /auth/logout` exists to satisfy the explicit requirement and give the client a consistent endpoint to call, but performs no server-side session invalidation — see "Important Technical Decisions" below for why, and the trade-off involved.
 
 ## Authorization Approach
 
@@ -267,6 +272,8 @@ User ──< Membership >── Organization
 - **Last-Owner protection.** An organization's only remaining Owner cannot be removed or demoted, even by another Owner (if one exists) or by themselves. This isn't explicitly required by the spec, but prevents an organization from being permanently left without anyone able to manage it.
 - **Comment moderation scope.** The spec requires that "users must not modify another user's comments unless their role explicitly permits the operation," without specifying which roles that includes. This implementation allows Admins and Owners to edit/delete any comment within their organization's projects, treating this as reasonable moderation capability — an explicit interpretation, not an oversight.
 - **Organization invitations require an existing account.** `addMember` looks up the invited person by email and requires them to already be registered, rather than implementing a full email-invitation flow for non-users. This was a deliberate scope decision given the one-day time budget.
+- **Logout is client-side only.** With stateless JWT auth, there is no server-side session to destroy — a JWT remains cryptographically valid until it naturally expires (7 days) regardless of any "logout" action. `POST /auth/logout` exists to satisfy the spec's explicit requirement and give the frontend a consistent endpoint, but the actual effect of logging out (discarding the token) happens entirely client-side. A stricter implementation would maintain a server-side revoked-token blocklist or use short-lived tokens with refresh tokens; this was judged unnecessary infrastructure for the assessment's scope.
 - **Centralized error handling.** A single Express error-handling middleware (`middleware/errorHandler.js`) formats Mongoose `ValidationError`, `CastError`, and duplicate-key (`11000`) errors into consistent, appropriately-coded JSON responses (400/409 rather than a generic 500), acting as a safety net behind per-field validators.
 - **Rate limiting on authentication endpoints.** `POST /auth/login` and `POST /auth/register` are limited to 10 requests per 15 minutes per IP, to slow down brute-force credential attempts without meaningfully affecting legitimate use.
 - **Dashboard statistics use `countDocuments`/aggregation queries**, never full-collection fetches, so that computing simple counts doesn't require transferring the entire issue dataset to the frontend — this remains performant regardless of how many issues a project accumulates.
+
