@@ -30,7 +30,7 @@ const OrganizationDetailPage = () => {
   return (
   <div>
     <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-      <Link to="/" className="hover:text-indigo-600">← Organizations</Link>
+      <Link to="/organization" className="hover:text-indigo-600">← Organizations</Link>
       <span>·</span>
       <Link to={`/organizations/${orgId}/members`} className="hover:text-indigo-600">Members</Link>
     </div>

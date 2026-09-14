@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000000, // Fail fast if connection hangs
+  serverSelectionTimeoutMS: 5000, // Fail fast if connection hangs
 })
   .then(() => {
     console.log('MongoDB connected');
