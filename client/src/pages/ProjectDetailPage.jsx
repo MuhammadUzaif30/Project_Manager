@@ -56,82 +56,94 @@ const ProjectDetailPage = () => {
     setShowCreateForm(false);
   };
 
-  if (isLoading) return <div>Loading issues...</div>;
-  if (isError) return <div>Failed to load issues.</div>;
+  if (isLoading) return <div className="text-slate-400 text-sm">Loading issues...</div>;
+  if (isError) return <div className="text-red-600 text-sm">Failed to load issues.</div>;
 
   const { issues, pagination } = data;
-  
+
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto' }}>
-      <h1>Issues</h1>
-        <Link to={`/organizations/${orgId}`}>← Back to projects</Link>
-        {' · '}
-        <Link to={`/organizations/${orgId}/projects/${projectId}/dashboard`}>Dashboard</Link>
-        {' · '}
-        <Link to={`/organizations/${orgId}/projects/${projectId}/activity`}>Activity</Link>
-      {/* Project Members Section renders here once the project data has loaded */}
-      {project && (
-        <ProjectMembersSection
-          orgId={orgId}
-          projectId={projectId}
-          project={project}
-          orgMembers={orgMembers}
-          canManage={canManage}
-        />
-      )}
-
-      {showCreateForm ? (
-        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 16, marginBottom: 16 }}>
-          <IssueForm
-            members={project?.members}
-            onSubmit={handleCreateIssue}
-            onCancel={() => setShowCreateForm(false)}
-            isSubmitting={createIssueMutation.isPending}
-          />
-        </div>
-      ) : (
-        <button onClick={() => setShowCreateForm(true)} style={{ marginBottom: 16 }}>
-          + New Issue
-        </button>
-      )}
-
-      {/* Passing the project members and computed labels to the filter bar */}
-      <IssueFilterBar 
-        filters={filters} 
-        onChange={setFilters} 
-        members={project?.members}
-        availableLabels={availableLabels}
-      />
-
-      {issues.length === 0 ? (
-        <p>No issues match your filters.</p>
-      ) : (
-        issues.map((issue) => (
-          <Link key={issue._id} to={`/organizations/${orgId}/projects/${projectId}/issues/${issue._id}`}>
-            <IssueCard issue={issue} />
-          </Link>
-        ))
-      )}
-
-      <div style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <button
-          disabled={pagination.page <= 1}
-          onClick={() => setFilters({ ...filters, page: pagination.page - 1 })}
-        >
-          Previous
-        </button>
-        <span>
-          Page {pagination.page} of {pagination.totalPages || 1}
-        </span>
-        <button
-          disabled={pagination.page >= pagination.totalPages}
-          onClick={() => setFilters({ ...filters, page: pagination.page + 1 })}
-        >
-          Next
-        </button>
-      </div>
+  <div>
+    <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+      <Link to={`/organizations/${orgId}`} className="hover:text-indigo-600">← Projects</Link>
+      <span>·</span>
+      <Link to={`/organizations/${orgId}/projects/${projectId}/dashboard`} className="hover:text-indigo-600">
+        Dashboard
+      </Link>
+      <span>·</span>
+      <Link to={`/organizations/${orgId}/projects/${projectId}/activity`} className="hover:text-indigo-600">
+        Activity
+      </Link>
     </div>
-  );
+    <h1 className="text-2xl font-semibold text-slate-900 mb-6">Issues</h1>
+
+    {project && (
+      <ProjectMembersSection
+        orgId={orgId}
+        projectId={projectId}
+        project={project}
+        orgMembers={orgMembers}
+        canManage={canManage}
+      />
+    )}
+
+    {showCreateForm ? (
+      <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+        <IssueForm
+          members={project?.members}
+          onSubmit={handleCreateIssue}
+          onCancel={() => setShowCreateForm(false)}
+          isSubmitting={createIssueMutation.isPending}
+        />
+      </div>
+    ) : (
+      <button
+        onClick={() => setShowCreateForm(true)}
+        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition mb-4"
+      >
+        + New Issue
+      </button>
+    )}
+
+    <IssueFilterBar
+      filters={filters}
+      onChange={setFilters}
+      members={project?.members}
+      availableLabels={availableLabels}
+    />
+
+    {issues.length === 0 ? (
+      <div className="bg-white border border-dashed border-slate-300 rounded-xl p-10 text-center">
+        <p className="text-slate-500">No issues match your filters.</p>
+      </div>
+    ) : (
+      issues.map((issue) => (
+        <Link key={issue._id} to={`/organizations/${orgId}/projects/${projectId}/issues/${issue._id}`}>
+          <IssueCard issue={issue} />
+        </Link>
+      ))
+    )}
+
+    <div className="flex items-center justify-center gap-3 mt-4 text-sm">
+      <button
+        disabled={pagination.page <= 1}
+        onClick={() => setFilters({ ...filters, page: pagination.page - 1 })}
+        className="px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        Previous
+      </button>
+      <span className="text-slate-500">
+        Page {pagination.page} of {pagination.totalPages || 1}
+      </span>
+      <button
+        disabled={pagination.page >= pagination.totalPages}
+        onClick={() => setFilters({ ...filters, page: pagination.page + 1 })}
+        className="px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+);
 };
 
 export default ProjectDetailPage;

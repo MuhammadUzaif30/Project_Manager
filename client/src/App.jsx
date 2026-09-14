@@ -11,6 +11,7 @@ import { SocketProvider } from './context/SocketContext';
 import DashboardPage from './pages/DashboardPage';
 import OrganizationMembersPage from './pages/OrganizationMembersPage';
 import ProjectActivityPage from './pages/ProjectActivityPage';
+import Navbar from './components/Navbar';
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,12 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
 
-  return children;
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <Navbar />
+      <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
+    </div>
+  );
 };
 
 const AppRoutes = () => {

@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../context/SocketContext';
 import { useProject } from '../hooks/useProjects';
 import IssueForm from '../components/IssueForm';
+import { StatusBadge, PriorityBadge } from '../components/Badges';
 
 const IssueDetailPage = () => {
   const { orgId, projectId, issueId } = useParams();
@@ -52,8 +53,8 @@ const IssueDetailPage = () => {
   const updateCommentMutation = useUpdateComment(orgId, projectId, issueId);
   const deleteCommentMutation = useDeleteComment(orgId, projectId, issueId);
 
-  if (issueLoading) return <div>Loading issue...</div>;
-  if (issueError) return <div>Failed to load issue.</div>;
+  if (issueLoading) return <div className="text-slate-400 text-sm">Loading issue...</div>;
+  if (issueError) return <div className="text-red-600 text-sm">Failed to load issue.</div>;
 
   const issueActivity = (allActivity || []).filter((a) => a.targetId === issueId);
 
@@ -64,101 +65,129 @@ const IssueDetailPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto' }}>
-      <Link to={`/organizations/${orgId}/projects/${projectId}`}>← Back to issues</Link>
-      
+  <div className="max-w-2xl mx-auto">
+    {/* Back Navigation */}
+    <Link
+      to={`/organizations/${orgId}/projects/${projectId}`}
+      className="text-sm text-slate-500 hover:text-indigo-600"
+    >
+      ← Back to issues
+    </Link>
+
+    {/* Issue Card Section */}
+    <div className="bg-white border border-slate-200 rounded-xl p-5 mt-3 mb-6">
       {isEditing ? (
-        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 16, marginBottom: 16, marginTop: 16 }}>
-          <IssueForm
-            issue={issue}
-            members={project?.members}
-            isSubmitting={updateIssueMutation.isPending}
-            onCancel={() => setIsEditing(false)}
-            onSubmit={(payload) => {
-              updateIssueMutation.mutate(
-                { issueId, updates: payload },
-                { onSuccess: () => setIsEditing(false) }
-              );
-            }}
-          />
-        </div>
+        <IssueForm
+          issue={issue}
+          members={project?.members}
+          isSubmitting={updateIssueMutation.isPending}
+          onCancel={() => setIsEditing(false)}
+          onSubmit={(payload) =>
+            updateIssueMutation.mutate(
+              { issueId, updates: payload },
+              { onSuccess: () => setIsEditing(false) }
+            )
+          }
+        />
       ) : (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1>{issue.title}</h1>
-            <button onClick={() => setIsEditing(true)}>Edit</button>
+        <div>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-xl font-semibold text-slate-900">{issue.title}</h1>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="shrink-0 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition"
+            >
+              Edit
+            </button>
           </div>
-          <p>{issue.description || <em>No description</em>}</p>
-          <p style={{ fontSize: 14, color: '#666' }}>
-            Status: {issue.status} · Priority: {issue.priority} · Reporter: {issue.reporter.name} · Assignee:{' '}
-            {issue.assignee?.name || 'Unassigned'}
-            {issue.dueDate && ` · Due ${new Date(issue.dueDate).toLocaleDateString()}`}
+          <p className="text-slate-600 mt-2">
+            {issue.description || <em className="text-slate-400">No description</em>}
           </p>
+          <div className="flex items-center gap-2 mt-4">
+            <StatusBadge status={issue.status} />
+            <PriorityBadge priority={issue.priority} />
+          </div>
+          <div className="text-sm text-slate-500 mt-4 space-y-1">
+            <p>Reporter: <span className="text-slate-700">{issue.reporter.name}</span></p>
+            <p>Assignee: <span className="text-slate-700">{issue.assignee?.name || 'Unassigned'}</span></p>
+            {issue.dueDate && (
+              <p>Due: <span className="text-slate-700">{new Date(issue.dueDate).toLocaleDateString()}</span></p>
+            )}
+          </div>
           {issue.labels?.length > 0 && (
-            <p>
+            <div className="flex gap-1 mt-3 flex-wrap">
               {issue.labels.map((label) => (
-                <span
-                  key={label}
-                  style={{ fontSize: 12, background: '#eee', padding: '2px 6px', borderRadius: 4, marginRight: 4 }}
-                >
+                <span key={label} className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
                   {label}
                 </span>
               ))}
-            </p>
+            </div>
           )}
         </div>
       )}
-
       {updateIssueMutation.isError && (
-        <p style={{ color: 'red' }}>
+        <p className="text-sm text-red-600 mt-3">
           {updateIssueMutation.error.response?.data?.message || 'Could not update issue'}
         </p>
       )}
+    </div>
 
-      <h2>Comments</h2>
+    {/* Comments Section */}
+    <h2 className="text-lg font-semibold text-slate-900 mb-2">Comments</h2>
+    <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
       {commentsLoading ? (
-        <p>Loading comments...</p>
+        <p className="text-slate-400 text-sm">Loading comments...</p>
       ) : comments.length === 0 ? (
-        <p>No comments yet.</p>
+        <p className="text-slate-400 text-sm">No comments yet.</p>
       ) : (
-        comments.map((comment) => (
-          <CommentItem
-            key={comment._id}
-            comment={comment}
-            onUpdate={(payload) => updateCommentMutation.mutate(payload)}
-            onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
-            currentMembershipRole={issue.myRole}
-          />
-        ))
+        <div className="space-y-3">
+          {comments.map((comment) => (
+            <CommentItem
+              key={comment._id}
+              comment={comment}
+              onUpdate={(payload) => updateCommentMutation.mutate(payload)}
+              onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
+              currentMembershipRole={issue.myRole}
+            />
+          ))}
+        </div>
       )}
-
-      <form onSubmit={handleAddComment} style={{ marginTop: 12 }}>
+      <form onSubmit={handleAddComment} className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
         <input
           type="text"
           placeholder="Add a comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          style={{ width: '70%' }}
+          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
-        <button type="submit" disabled={createCommentMutation.isPending}>
+        <button
+          type="submit"
+          disabled={createCommentMutation.isPending}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+        >
           Comment
         </button>
       </form>
+    </div>
 
-      <h2>Activity</h2>
+    {/* Activity Section */}
+    <h2 className="text-lg font-semibold text-slate-900 mb-2">Activity</h2>
+    <div className="bg-white border border-slate-200 rounded-xl p-5">
       {issueActivity.length === 0 ? (
-        <p>No activity recorded yet.</p>
+        <p className="text-slate-400 text-sm">No activity recorded yet.</p>
       ) : (
-        <ul>
+        <ul className="space-y-1.5 text-sm text-slate-500">
           {issueActivity.map((entry) => (
-            <li key={entry._id} style={{ fontSize: 14, color: '#666' }}>
-              {entry.user.name} — {entry.action} ({new Date(entry.createdAt).toLocaleString()})
+            <li key={entry._id}>
+              <span className="text-slate-700 font-medium">{entry.user.name}</span> — {entry.action}{' '}
+              <span className="text-slate-400">({new Date(entry.createdAt).toLocaleString()})</span>
             </li>
           ))}
         </ul>
       )}
     </div>
-  );
+  </div>
+);
 };
 
 export default IssueDetailPage;

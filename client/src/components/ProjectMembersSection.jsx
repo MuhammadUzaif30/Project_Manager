@@ -19,43 +19,50 @@ const ProjectMembersSection = ({ orgId, projectId, project, orgMembers, canManag
   };
 
   return (
-    <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 12, marginBottom: 16 }}>
-      <h3 style={{ marginTop: 0 }}>Project Members</h3>
+  <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+    <h3 className="text-sm font-semibold text-slate-900 mb-3">Project Members</h3>
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {project.members.map((member) => (
-          <li key={member._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-            <span>{member.name} ({member.email})</span>
-            {canManage && (
-              <button onClick={() => handleRemove(member._id)}>Remove</button>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {canManage && (
-        <div style={{ marginTop: 8 }}>
-          <select defaultValue="" onChange={handleAdd}>
-            <option value="" disabled>
-              + Add a member from the organization...
-            </option>
-            {eligibleToAdd.map((m) => (
-              <option key={m.user._id} value={m.user._id}>
-                {m.user.name}
-              </option>
-            ))}
-          </select>
+    <div className="space-y-2">
+      {project.members.map((member) => (
+        <div key={member._id} className="flex items-center justify-between text-sm">
+          <span className="text-slate-700">
+            {member.name} <span className="text-slate-400">({member.email})</span>
+          </span>
+          {canManage && (
+            <button
+              onClick={() => handleRemove(member._id)}
+              className="text-red-600 text-xs hover:underline"
+            >
+              Remove
+            </button>
+          )}
         </div>
-      )}
-
-      {(addMemberMutation.isError || removeMemberMutation.isError) && (
-        <p style={{ color: 'red' }}>
-          {(addMemberMutation.error || removeMemberMutation.error)?.response?.data?.message ||
-            'Could not update project members'}
-        </p>
-      )}
+      ))}
     </div>
-  );
+
+    {canManage && (
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <select
+          defaultValue=""
+          onChange={handleAdd}
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="" disabled>+ Add a member from the organization...</option>
+          {eligibleToAdd.map((m) => (
+            <option key={m.user._id} value={m.user._id}>{m.user.name}</option>
+          ))}
+        </select>
+      </div>
+    )}
+
+    {(addMemberMutation.isError || removeMemberMutation.isError) && (
+      <p className="text-sm text-red-600 mt-2">
+        {(addMemberMutation.error || removeMemberMutation.error)?.response?.data?.message ||
+          'Could not update project members'}
+      </p>
+    )}
+  </div>
+);
 };
 
 export default ProjectMembersSection;

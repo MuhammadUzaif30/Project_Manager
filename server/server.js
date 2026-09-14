@@ -58,10 +58,16 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000000, // Fail fast if connection hangs
+})
+  .then(() => {
+    console.log('MongoDB connected');
+    server.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });

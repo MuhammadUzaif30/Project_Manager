@@ -1,37 +1,26 @@
-const priorityColors = {
-  LOW: '#888',
-  MEDIUM: '#3b82f6',
-  HIGH: '#f97316',
-  CRITICAL: '#ef4444',
-};
+import { StatusBadge, PriorityBadge } from './Badges';
 
 const IssueCard = ({ issue, onClick }) => {
   return (
     <div
       onClick={onClick}
-      style={{
-        border: '1px solid #ddd',
-        borderRadius: 6,
-        padding: 12,
-        marginBottom: 8,
-        cursor: 'pointer',
-      }}
+      className="bg-white border border-slate-200 rounded-lg p-4 mb-2 cursor-pointer hover:border-indigo-300 hover:shadow-sm transition"
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <strong>{issue.title}</strong>
-        <span style={{ color: priorityColors[issue.priority] }}>{issue.priority}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-medium text-slate-900">{issue.title}</span>
+        <PriorityBadge priority={issue.priority} />
       </div>
-      <div style={{ fontSize: 14, color: '#666' }}>
-        {issue.status} · Assignee: {issue.assignee?.name || 'Unassigned'}
-        {issue.dueDate && ` · Due ${new Date(issue.dueDate).toLocaleDateString()}`}
+
+      <div className="flex items-center gap-2 text-sm text-slate-500">
+        <StatusBadge status={issue.status} />
+        <span>· {issue.assignee?.name || 'Unassigned'}</span>
+        {issue.dueDate && <span>· Due {new Date(issue.dueDate).toLocaleDateString()}</span>}
       </div>
+
       {issue.labels?.length > 0 && (
-        <div style={{ marginTop: 4 }}>
+        <div className="flex gap-1 mt-2 flex-wrap">
           {issue.labels.map((label) => (
-            <span
-              key={label}
-              style={{ fontSize: 12, background: '#eee', padding: '2px 6px', borderRadius: 4, marginRight: 4 }}
-            >
+            <span key={label} className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
               {label}
             </span>
           ))}

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchIssues, createIssue, updateIssue,  fetchProjectLabels } from '../api/issues';
-
+import { fetchIssues, fetchIssue, createIssue, updateIssue, fetchProjectLabels } from '../api/issues';
 export const useIssues = (orgId, projectId, filters) => {
   return useQuery({
     queryKey: ['issues', orgId, projectId, filters],

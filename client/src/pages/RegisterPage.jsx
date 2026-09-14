@@ -35,31 +35,65 @@ const RegisterPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '80px auto' }}>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="w-full max-w-sm bg-white p-8 rounded-xl border border-slate-200">
+      <h1 className="text-xl font-semibold text-slate-900 mb-1">Create an account</h1>
+      <p className="text-sm text-slate-500 mb-6">Start tracking your team's work</p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label>Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
+
         <div>
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
+
         <div>
-          <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={isSubmitting}>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+        >
           {isSubmitting ? 'Creating account...' : 'Register'}
         </button>
       </form>
-      <p>
-        Already have an account? <Link to="/login">Log In</Link>
+
+      <p className="text-sm text-slate-500 mt-4 text-center">
+        Already have an account?{' '}
+        <Link to="/login" className="text-indigo-600 font-medium hover:underline">
+          Log In
+        </Link>
       </p>
     </div>
-  );
+  </div>
+);
 };
 
 export default RegisterPage;
