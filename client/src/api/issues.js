@@ -27,3 +27,7 @@ export const fetchIssue = async ({ orgId, projectId, issueId }) => {
   const res = await axiosClient.get(`/organizations/${orgId}/projects/${projectId}/issues/${issueId}`);
   return { ...res.data.issue, myRole: res.data.myRole };
 };
+export const fetchProjectLabels = async ({ orgId, projectId }) => {
+  const res = await axiosClient.get(`/organizations/${orgId}/projects/${projectId}/issues/labels`);
+  return res.data.labels;
+};

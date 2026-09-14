@@ -184,5 +184,13 @@ const listIssues = async (req, res) => {
   }
 
 };
-
-module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues }
+const getProjectLabels = async (req, res) => {
+  try {
+    const labels = await Issue.distinct('labels', { project: req.project._id });
+    res.status(200).json({ labels: labels.filter(Boolean).sort() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+module.exports = { createIssue, getIssue, updateIssue, deleteIssue, listIssues, getProjectLabels };

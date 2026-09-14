@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchIssues, createIssue, updateIssue } from '../api/issues';
-import { fetchIssue } from '../api/issues';
+import { fetchIssues, createIssue, updateIssue,  fetchProjectLabels } from '../api/issues';
 
 export const useIssues = (orgId, projectId, filters) => {
   return useQuery({
@@ -34,5 +33,12 @@ export const useUpdateIssue = (orgId, projectId) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues', orgId, projectId] });
     },
+  });
+};
+export const useProjectLabels = (orgId, projectId) => {
+  return useQuery({
+    queryKey: ['issueLabels', orgId, projectId],
+    queryFn: () => fetchProjectLabels({ orgId, projectId }),
+    enabled: !!orgId && !!projectId,
   });
 };

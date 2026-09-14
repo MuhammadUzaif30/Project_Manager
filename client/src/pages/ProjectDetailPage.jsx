@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useIssues, useCreateIssue } from '../hooks/useIssues';
+import { useIssues, useCreateIssue , useProjectLabels} from '../hooks/useIssues';
 import IssueCard from '../components/IssueCard';
 import IssueFilterBar from '../components/IssueFilterBar';
 import { useQueryClient } from '@tanstack/react-query';
@@ -42,6 +42,7 @@ const ProjectDetailPage = () => {
 
   const { data, isLoading, isError } = useIssues(orgId, projectId, filters);
   const createIssueMutation = useCreateIssue(orgId, projectId);
+  const { data: availableLabels = [] } = useProjectLabels(orgId, projectId);
   
   const { data: project } = useProject(orgId, projectId);
   const { data: orgMembers } = useMembers(orgId);
@@ -60,9 +61,6 @@ const ProjectDetailPage = () => {
 
   const { issues, pagination } = data;
   
-  // This extracts all unique labels from the currently loaded issues
-  const availableLabels = [...new Set((issues || []).flatMap((issue) => issue.labels || []))];
-
   return (
     <div style={{ maxWidth: 700, margin: '40px auto' }}>
       <h1>Issues</h1>

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { createIssue, getIssue, updateIssue, deleteIssue, listIssues } = require('../controllers/issueController');
+const { createIssue, getIssue, updateIssue, deleteIssue, listIssues, getProjectLabels } = require('../controllers/issueController');
 const authenticate = require('../middleware/authenticate');
 const requireOrgRole = require('../middleware/requireOrgRole');
 const loadProject = require('../middleware/loadProject');
@@ -17,10 +17,10 @@ router.use(requireProjectMember);
 
 router.post('/', createIssueValidation, validate, createIssue);
 router.get('/', listIssues);
+router.get('/labels', getProjectLabels);
 router.get('/:issueId', getIssue);
-router.patch('/:issueId', updateIssue);
-router.delete('/:issueId', deleteIssue);
 router.patch('/:issueId', updateIssueValidation, validate, updateIssue);
+router.delete('/:issueId', deleteIssue);
 router.use('/:issueId/comments', commentRoutes);
 
 module.exports = router;

@@ -29,7 +29,7 @@ const OrganizationDetailPage = () => {
 
   return (
     <div style={{ maxWidth: 600, margin: '40px auto' }}>
-      <Link to="/">← Back to organizations</Link>
+      <Link to="/organization">← Back to organizations</Link>
       {' · '}
       <Link to={`/organizations/${orgId}/members`}>Members</Link>
       <h1>Projects</h1>
