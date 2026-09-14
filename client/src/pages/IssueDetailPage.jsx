@@ -63,6 +63,20 @@ const IssueDetailPage = () => {
     if (!newComment.trim()) return;
     createCommentMutation.mutate(newComment, { onSuccess: () => setNewComment('') });
   };
+  const handleCommentUpdated = (comment) => {
+  if (comment.issue === issueId) {
+    queryClient.invalidateQueries({ queryKey: ['comments', orgId, projectId, issueId] });
+  }
+};
+
+const handleCommentDeleted = (data) => {
+  if (data.issueId === issueId) {
+    queryClient.invalidateQueries({ queryKey: ['comments', orgId, projectId, issueId] });
+  }
+};
+
+socket.on('comment:updated', handleCommentUpdated);
+socket.on('comment:deleted', handleCommentDeleted);
 
   return (
   <div className="max-w-2xl mx-auto">

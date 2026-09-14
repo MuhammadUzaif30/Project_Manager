@@ -1,60 +1,53 @@
-const Organization = require('../models/Organization')
-const Membership = require('../models/Membership')
-const User = require('../models/User')
+const Organization = require('../models/Organization');
+const Membership = require('../models/Membership');
+const User = require('../models/User');
 const logActivity = require('../utils/logActivity');
 
-const createOrganization = async (req, res) => {
-    try {
-        const { name } = req.body;
-        const organization = await Organization.create({
-            name,
-            createdBy: req.user._id,
-        });
-        
-        await Membership.create({
-            user: req.user._id,
-            organization: organization._id,
-            role: 'Owner',
-        });
-        
-        // FIXED: Updated success message
-        res.status(201).json({ message: 'Organization created successfully', organization });
-    } catch(err) {
-        console.error(err);
-        // FIXED: Typo in message
-        res.status(500).json({ message: 'Something went wrong' }); 
-    }
+const createOrganization = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const organization = await Organization.create({
+      name,
+      createdBy: req.user._id,
+    });
+
+    await Membership.create({
+      user: req.user._id,
+      organization: organization._id,
+      role: 'Owner',
+    });
+
+    res.status(201).json({ message: 'Organization created successfully', organization });
+  } catch (err) {
+    next(err);
+  }
 };
 
+const getMyOrganizations = async (req, res, next) => {
+  try {
+    const memberships = await Membership.find({ user: req.user._id }).populate('organization');
 
-const getMyOrganizations = async (req, res) => { 
-    try {
-        const memberships = await Membership.find({ user: req.user._id }).populate('organization');
-        
-        const organizations = memberships.map((m) => ({
-            ...m.organization.toObject(),
-            myRole: m.role,
-        }));
-        
-        
-        res.status(200).json({ organizations }); 
-    } catch(err) {
-        console.error(err);
-        res.status(500).json({ message: 'Something went wrong' });
-    }
+    const organizations = memberships.map((m) => ({
+      ...m.organization.toObject(),
+      myRole: m.role,
+    }));
+
+    res.status(200).json({ organizations });
+  } catch (err) {
+    next(err);
+  }
 };
 
-const getMembers = async (req, res) => {
+const getMembers = async (req, res, next) => {
   try {
     const memberships = await Membership.find({ organization: req.params.orgId }).populate('user', 'name email');
     res.status(200).json({ members: memberships });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const addMember = async (req, res) => {
+const addMember = async (req, res, next) => {
   try {
     const { email, role } = req.body;
     const organizationId = req.params.orgId;
@@ -76,23 +69,22 @@ const addMember = async (req, res) => {
     });
 
     await logActivity({
-        organization: organizationId,
-        project: null,
-        user: req.user._id,
-        action: 'Organization member added',
-        targetType: 'Membership',
-        targetId: membership._id,
-        metadata: { addedUser: user._id, role: membership.role },
-});
+      organization: organizationId,
+      project: null,
+      user: req.user._id,
+      action: 'Organization member added',
+      targetType: 'Membership',
+      targetId: membership._id,
+      metadata: { addedUser: user._id, role: membership.role },
+    });
 
     res.status(201).json({ membership });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const removeMember = async (req, res) => {
+const removeMember = async (req, res, next) => {
   try {
     const { orgId, userId } = req.params;
 
@@ -109,24 +101,23 @@ const removeMember = async (req, res) => {
     }
 
     await logActivity({
-        organization: orgId,
-        project: null,
-        user: req.user._id,
-        action: 'Organization member removed',
-        targetType: 'Membership',
-        targetId: membership._id,
-        metadata: { removedUser: userId },
-});
+      organization: orgId,
+      project: null,
+      user: req.user._id,
+      action: 'Organization member removed',
+      targetType: 'Membership',
+      targetId: membership._id,
+      metadata: { removedUser: userId },
+    });
 
     await membership.deleteOne();
     res.status(200).json({ message: 'Member removed' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const changeMemberRole = async (req, res) => {
+const changeMemberRole = async (req, res, next) => {
   try {
     const { orgId, userId } = req.params;
     const { role } = req.body;
@@ -143,17 +134,19 @@ const changeMemberRole = async (req, res) => {
       }
     }
 
+    const previousRole = membership.role;
     membership.role = role;
-    await logActivity({
-        organization: orgId,
-        project: null,
-        user: req.user._id,
-        action: 'Member role changed',
-        targetType: 'Membership',
-        targetId: membership._id,
-        metadata: { targetUser: userId, from: membership.role, to: role },
-});
     await membership.save();
+
+    await logActivity({
+      organization: orgId,
+      project: null,
+      user: req.user._id,
+      action: 'Member role changed',
+      targetType: 'Membership',
+      targetId: membership._id,
+      metadata: { targetUser: userId, from: previousRole, to: role },
+    });
 
     res.status(200).json({ membership });
   } catch (err) {
