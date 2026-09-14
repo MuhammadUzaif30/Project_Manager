@@ -1,6 +1,6 @@
 # Team Issue & Project Management System
 
-A simplified, Jira-style team issue tracker built as a full-stack MERN technical assessment. Supports multi-tenant organizations with role-based access control, projects, issues with full search/filter/sort/pagination, comments, an activity log, a dashboard, and real-time collaboration via Socket.IO.
+A simplified,  team issue tracker built as a full-stack MERN technical assessment. Supports multi-tenant organizations with role-based access control, projects, issues with full search/filter/sort/pagination, comments, an activity log, a dashboard, and real-time collaboration via Socket.IO.
 
 ## Table of Contents
 
