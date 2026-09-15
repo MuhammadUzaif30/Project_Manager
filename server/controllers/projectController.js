@@ -1,6 +1,9 @@
 const Project = require('../models/Project');
 const Membership = require('../models/Membership');
-const createProject = async (req, res) => {
+const Issue = require('../models/Issue');
+const Comment = require('../models/Comment');
+
+const createProject = async (req, res, next) => {
   try {
     const { name, description, status } = req.body;
 
@@ -15,12 +18,11 @@ const createProject = async (req, res) => {
 
     res.status(201).json({ project });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const listProjects = async (req, res) => {
+const listProjects = async (req, res, next) => {
   try {
     const isPrivileged = req.membership.role === 'Owner' || req.membership.role === 'Admin';
 
@@ -32,22 +34,20 @@ const listProjects = async (req, res) => {
     const projects = await Project.find(filter).sort({ createdAt: -1 });
     res.status(200).json({ projects });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const getProjectDetails = async (req, res) => {
+const getProjectDetails = async (req, res, next) => {
   try {
     const project = await req.project.populate('members', 'name email');
     res.status(200).json({ project });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const updateProject = async (req, res) => {
+const updateProject = async (req, res, next) => {
   try {
     const { name, description, status } = req.body;
 
@@ -58,22 +58,23 @@ const updateProject = async (req, res) => {
     await req.project.save();
     res.status(200).json({ project: req.project });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const deleteProject = async (req, res) => {
+const deleteProject = async (req, res, next) => {
   try {
+    await Comment.deleteMany({ project: req.project._id });
+    await Issue.deleteMany({ project: req.project._id });
     await req.project.deleteOne();
+
     res.status(200).json({ message: 'Project deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
 
-const addProjectMember = async (req, res) => {
+const addProjectMember = async (req, res, next) => {
   try {
     const { userId } = req.body;
 
@@ -93,11 +94,11 @@ const addProjectMember = async (req, res) => {
     await req.project.save();
     res.status(200).json({ project: req.project });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong' });
+    next(err);
   }
 };
-const removeProjectMember = async (req, res) => {
+
+const removeProjectMember = async (req, res, next) => {
   try {
     const { userId } = req.params;
 

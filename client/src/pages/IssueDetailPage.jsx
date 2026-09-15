@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useIssue, useUpdateIssue } from '../hooks/useIssues';
+import { useIssue, useUpdateIssue , useDeleteIssue } from '../hooks/useIssues';
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment } from '../hooks/useComments';
 import { useProjectActivity } from '../hooks/useActivity';
 import CommentItem from '../components/CommentItem';
@@ -9,6 +9,8 @@ import { useSocket } from '../context/SocketContext';
 import { useProject } from '../hooks/useProjects';
 import IssueForm from '../components/IssueForm';
 import { StatusBadge, PriorityBadge } from '../components/Badges';
+import { useNavigate } from 'react-router-dom';
+
 
 const IssueDetailPage = () => {
   const { orgId, projectId, issueId } = useParams();
@@ -75,6 +77,15 @@ const handleCommentDeleted = (data) => {
   }
 };
 
+const navigate = useNavigate();
+const deleteIssueMutation = useDeleteIssue(orgId, projectId);
+
+const handleDelete = async () => {
+  if (!window.confirm('Delete this issue? This cannot be undone.')) return;
+  await deleteIssueMutation.mutateAsync(issueId);
+  navigate(`/organizations/${orgId}/projects/${projectId}`);
+};
+
 socket.on('comment:updated', handleCommentUpdated);
 socket.on('comment:deleted', handleCommentDeleted);
 
@@ -113,6 +124,16 @@ socket.on('comment:deleted', handleCommentDeleted);
             >
               Edit
             </button>
+              {(issue.myRole === 'Owner' || issue.myRole === 'Admin') && (
+        <button
+            onClick={handleDelete}
+            disabled={deleteIssueMutation.isPending}
+            className="px-3 py-1.5 border border-red-200 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
+          >
+            Delete
+        </button>
+      )}
+
           </div>
           <p className="text-slate-600 mt-2">
             {issue.description || <em className="text-slate-400">No description</em>}

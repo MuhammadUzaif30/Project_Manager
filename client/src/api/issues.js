@@ -31,3 +31,6 @@ export const fetchProjectLabels = async ({ orgId, projectId }) => {
   const res = await axiosClient.get(`/organizations/${orgId}/projects/${projectId}/issues/labels`);
   return res.data.labels;
 };
+export const deleteIssue = async ({ orgId, projectId, issueId }) => {
+  await axiosClient.delete(`/organizations/${orgId}/projects/${projectId}/issues/${issueId}`);
+};

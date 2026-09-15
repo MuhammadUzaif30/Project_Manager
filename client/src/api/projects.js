@@ -22,3 +22,6 @@ export const removeProjectMember = async ({ orgId, projectId, userId }) => {
   const res = await axiosClient.delete(`/organizations/${orgId}/projects/${projectId}/members/${userId}`);
   return res.data.project;
 };
+export const deleteProject = async ({ orgId, projectId }) => {
+  await axiosClient.delete(`/organizations/${orgId}/projects/${projectId}`);
+};
